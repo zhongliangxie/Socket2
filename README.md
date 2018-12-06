@@ -1,2 +1,2 @@
 # Socket2
-a samll c# socket wrapper for unity
+a small c# socket wrapper for unity
