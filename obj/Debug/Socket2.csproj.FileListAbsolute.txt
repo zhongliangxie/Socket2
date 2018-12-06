@@ -1,0 +1,6 @@
+D:\visual studio 2017\Projects\ConsoleApp1\Socket2\bin\Debug\Socket2.dll
+D:\visual studio 2017\Projects\ConsoleApp1\Socket2\bin\Debug\Socket2.pdb
+D:\visual studio 2017\Projects\ConsoleApp1\Socket2\obj\Debug\Socket2.csproj.CoreCompileInputs.cache
+D:\visual studio 2017\Projects\ConsoleApp1\Socket2\obj\Debug\Socket2.dll
+D:\visual studio 2017\Projects\ConsoleApp1\Socket2\obj\Debug\Socket2.pdb
+D:\visual studio 2017\Projects\ConsoleApp1\Socket2\obj\Debug\Socket2.csprojAssemblyReference.cache
