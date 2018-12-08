@@ -7,6 +7,10 @@ namespace Socket2
 {
     public class PeerBase
     {
+        public string ServerAddress;
+        public int ServerPort;
+
+
         private SocketTcp sock;
         private Queue<Action> ActionQueue;
         public Queue<byte[]> incomingList;
@@ -37,7 +41,10 @@ namespace Socket2
             outgoingStream = new List<byte[]>();
             incomingList = new Queue<byte[]>();
             ActionQueue = new Queue<Action>();
-            this.sock = new SocketTcp(this, address, port);
+
+            this.ServerAddress = address;
+            this.ServerPort = port;
+            this.sock = new SocketTcp(this);
         }
 
         public void Service()
@@ -74,6 +81,24 @@ namespace Socket2
                 }
                 action();
             }
+        }
+
+        internal void EnqueueActionForDispatch(Action action)
+        {
+            lock (ActionQueue)
+            {
+                ActionQueue.Enqueue(action);
+            }
+            //throw new NotImplementedException();
+        }
+
+        internal void EnqueueStatusCallback(int statusCode)
+        {
+            lock (ActionQueue)
+            {
+                ActionQueue.Enqueue(() => listener.OnStatusChanged(statusCode));
+            }
+            //throw new NotImplementedException();
         }
 
         bool SendOutgoingCommands()
@@ -129,6 +154,11 @@ namespace Socket2
         }
 
         public bool Connect()
+        {
+            return sock.Connect();
+        }
+
+        public bool ConnectGameServer()
         {
             return sock.Connect();
         }

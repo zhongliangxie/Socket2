@@ -27,6 +27,15 @@ namespace Socket2
         private PeerBase peerBase;
         private readonly object syncer;
 
+        public SocketTcp(PeerBase peerBase)
+        {
+            syncer = new object();
+
+            this.peerBase = peerBase;
+
+            this.incomingList = new Queue<byte[]>();
+        }
+
         public SocketTcp(PeerBase peerBase, string serverAddress, int serverPort)
         {
             syncer = new object();
@@ -47,9 +56,12 @@ namespace Socket2
             return true;
         }
 
-        public void HandleException(int statusCode) {
+        public void HandleException(int statusCode)
+        {
 
             this.State = SocketState.Disconnecting;
+            peerBase.EnqueueStatusCallback(statusCode);
+            peerBase.EnqueueActionForDispatch(() => peerBase.Disconnect());
 
         }
 
@@ -57,7 +69,7 @@ namespace Socket2
         {
             try
             {
-                IPAddress ipAddress = Dns.GetHostAddresses(this.ServerAddress)[0];
+                IPAddress ipAddress = Dns.GetHostAddresses(this.peerBase.ServerAddress)[0];
                 if (ipAddress == null)
                 {
                     throw new ArgumentException("Invalid IPAddress.Address:" + this.ServerAddress);
@@ -66,16 +78,18 @@ namespace Socket2
                 {
                     NoDelay = true
                 };
-                this.sock.Connect(ipAddress, this.ServerPort);
+                this.sock.Connect(ipAddress, this.peerBase.ServerPort);
                 this.State = SocketState.Connected;
                 peerBase.InitCallBack();
             }
             catch (SecurityException se)
             {
+                System.Diagnostics.Debug.WriteLine("aaa DnsAndConnect se :" + se.StackTrace);
                 return;
             }
             catch (Exception exception)
             {
+                System.Diagnostics.Debug.WriteLine("aaa DnsAndConnect exception :" + exception.StackTrace);
                 return;
             }
             new Thread(new ThreadStart(this.ReceiveLoop))
@@ -97,6 +111,7 @@ namespace Socket2
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("aaa Send se :" + ex.StackTrace);
                 return;
             }
             return;
@@ -120,22 +135,17 @@ namespace Socket2
 
                     int offset = 0;
                     int num2 = 0;
-                    byte[] buffer = new byte[10];
-                    while (offset < 10)
+                    byte[] buffer = new byte[9];
+                    while (offset < 9)
                     {
-                        try
-                        {
-                            num2 = this.sock.Receive(buffer, offset, 10 - offset, SocketFlags.None);
-                            offset += num2;
-                            if (num2 == 0)
-                            {
-                                throw new SocketException(0x2746);
-                            }
-                        }
-                        catch
+
+                        num2 = this.sock.Receive(buffer, offset, 9 - offset, SocketFlags.None);
+                        offset += num2;
+                        if (num2 == 0)
                         {
                             throw new SocketException(0x2746);
                         }
+
                     }
                     //if (buffer[0] == 240)
                     //{
@@ -144,9 +154,9 @@ namespace Socket2
                     //}
                     //int size = (((buffer[1] << 0x18) | (buffer[2] << 0x10)) | (buffer[3] << 8)) | buffer[4];
                     int size = (buffer[0] << 8) | buffer[1];
-                    stream.Write(buffer, 4, offset - 8);
+                    stream.Write(buffer, 3, offset - 7);
                     offset = 0;
-                    size -= 8;
+                   // size -= 8;
                     buffer = new byte[size];
                     while (offset < size)
                     {
@@ -208,17 +218,20 @@ namespace Socket2
         public bool Disconnect()
         {
             State = SocketState.Disconnecting;
-            if (sock != null)
+            lock (syncer)
             {
-                try
+                if (sock != null)
                 {
-                    sock.Close();
+                    try
+                    {
+                        sock.Close();
+                    }
+                    catch (Exception e)
+                    {
+                        System.Diagnostics.Debug.WriteLine("bb Disconnect ex : " + e.StackTrace);
+                    }
+                    sock = null;
                 }
-                catch (Exception e)
-                {
-
-                }
-                sock = null;
             }
             State = SocketState.Disconnected;
             return true;
@@ -233,14 +246,12 @@ namespace Socket2
                 {
                     try
                     {
-                        if (this.sock.Connected)
-                        {
-                            this.sock.Close();
-                        }
+                        this.sock.Close();
                     }
                     catch (Exception ex)
                     {
-                        return;
+                        System.Diagnostics.Debug.WriteLine("bb Dispose ex : " + ex.StackTrace);
+
                     }
                     this.sock = null;
                 }
