@@ -83,6 +83,19 @@ namespace Socket2
             }
         }
 
+        internal void EnqueueDebugReturn(DebugLevel level, string debugReturn)
+        {
+            Action item = null;
+            lock (this.ActionQueue)
+            {
+                if (item == null)
+                {
+                    item = () => this.listener.DebugReturn(level, debugReturn);
+                }
+                this.ActionQueue.Enqueue(item);
+            }
+        }
+
         internal void EnqueueActionForDispatch(Action action)
         {
             lock (ActionQueue)

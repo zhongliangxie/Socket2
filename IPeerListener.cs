@@ -7,6 +7,7 @@
         void OnStatusChanged(int status);
 
         byte[] PingData();
+        void DebugReturn(DebugLevel level, string debugReturn);
         //void Send(byte[] data);
     }
 }

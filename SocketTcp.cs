@@ -8,6 +8,15 @@ using System.Threading;
 
 namespace Socket2
 {
+    public enum DebugLevel : byte
+    {
+        OFF = 0,
+        ERROR = 1,
+        WARNING = 2,
+        INFO = 3,
+        ALL = 5
+    }
+
     public enum SocketState
     {
         Disconnected = 0,
@@ -55,6 +64,10 @@ namespace Socket2
             }.Start();
             return true;
         }
+        public void EnqueueDebugReturn(DebugLevel debugLevel, string message)
+        {
+            this.peerBase.EnqueueDebugReturn(debugLevel, message);
+        }
 
         public void HandleException(int statusCode)
         {
@@ -84,7 +97,9 @@ namespace Socket2
             }
             catch (SecurityException se)
             {
-                System.Diagnostics.Debug.WriteLine("aaa DnsAndConnect se :" + se.StackTrace);
+                EnqueueDebugReturn(DebugLevel.ERROR, "Connect() to '" + ServerAddress + "' failed: " +  se.ToString());
+               
+                //System.Diagnostics.Debug.WriteLine("aaa DnsAndConnect se :" + se.StackTrace);
                 return;
             }
             catch (Exception exception)
@@ -217,6 +232,7 @@ namespace Socket2
 
         public bool Disconnect()
         {
+            EnqueueDebugReturn(DebugLevel.INFO, "SocketTcp.Disconnect()");
             State = SocketState.Disconnecting;
             lock (syncer)
             {
@@ -226,9 +242,9 @@ namespace Socket2
                     {
                         sock.Close();
                     }
-                    catch (Exception e)
+                    catch (Exception exception)
                     {
-                        System.Diagnostics.Debug.WriteLine("bb Disconnect ex : " + e.StackTrace);
+                        EnqueueDebugReturn(DebugLevel.INFO, "Exception in Disconnect(): " + exception);
                     }
                     sock = null;
                 }
@@ -248,10 +264,9 @@ namespace Socket2
                     {
                         this.sock.Close();
                     }
-                    catch (Exception ex)
+                    catch (Exception exception)
                     {
-                        System.Diagnostics.Debug.WriteLine("bb Dispose ex : " + ex.StackTrace);
-
+                        EnqueueDebugReturn(DebugLevel.INFO, "Exception in Dispose(): " + exception);
                     }
                     this.sock = null;
                 }
