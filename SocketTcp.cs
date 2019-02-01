@@ -150,11 +150,10 @@ namespace Socket2
 
                     int offset = 0;
                     int num2 = 0;
-                    byte[] buffer = new byte[9];
-                    while (offset < 9)
+                    byte[] buffer = new byte[11];
+                    while (offset < 11)
                     {
-
-                        num2 = this.sock.Receive(buffer, offset, 9 - offset, SocketFlags.None);
+                        num2 = this.sock.Receive(buffer, offset, 11 - offset, SocketFlags.None);
                         offset += num2;
                         if (num2 == 0)
                         {
@@ -168,8 +167,11 @@ namespace Socket2
                     //    continue;
                     //}
                     //int size = (((buffer[1] << 0x18) | (buffer[2] << 0x10)) | (buffer[3] << 8)) | buffer[4];
-                    int size = (buffer[0] << 8) | buffer[1];
-                    stream.Write(buffer, 3, offset - 7);
+                    //int size = (buffer[0] << 8) | buffer[1];
+
+                    int size = buffer[0] << 0x18 | buffer[1] << 0x10 | buffer[2] << 8 | buffer[3];//int size = (((buffer[0] << 0x18) | (buffer[1] << 0x10)) | (buffer[2] << 8)) | buffer[3];
+
+                    stream.Write(buffer,5, offset - 9);
                     offset = 0;
                    // size -= 8;
                     buffer = new byte[size];
